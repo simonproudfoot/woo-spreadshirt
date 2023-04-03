@@ -40,14 +40,13 @@ function set_spreadshirt_products()
                     'parent' => null,
                     'name' => $item->name . ' - ' . $productType->categoryName,
                     'regular_price' => $item->price->amount,
-                    'description' => $item->description,
+                    'description' => $productType->description,
                     'short_description' => $item->description,
                     'tags' => $item->tags,
                     'image' =>  $item->previewImage->url,
                     'type' => 'simple',
                     'status' => 'publish',
                 );
-
 
                 $size_attribute = new WC_Product_Attribute();
                 $size_attribute->set_id(0);
@@ -70,7 +69,11 @@ function set_spreadshirt_products()
                 //Save main product to get its id
                 $id = createProduct($product_data, $attributes);
                 update_post_meta($id, 'image_meta_url', $product_data['image']);
-                wp_set_object_terms($id, $productType->categoryName, 'product_cat');
+                wp_set_object_terms($id, array($productType->name, $productType->categoryName), 'product_cat');
+
+
+                
+
                 wp_set_object_terms($id, $product_data['tags'], 'product_tag');
 
                 foreach ($colors as $color) {
@@ -140,3 +143,16 @@ function getProductSizes($productTypeId)
     }
     return $sizes;
 }
+
+
+function test()
+{
+    $response = get_spreadshirt_data('sellables');
+    $id = $response->sellables[0]->productTypeId;
+    $ptype = get_spreadshirt_data('productTypes/' . $id);
+    echo '<pre>';
+    var_dump($ptype);
+    echo '</pre>';
+}
+
+//add_action('init', 'test');
