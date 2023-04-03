@@ -119,7 +119,7 @@ function set_spreadshirt_products()
                 $product_data = array(
                     'SKU' => $item->sellableId,
                     'parent' => null,
-                    'name' => $item->name,
+                    'name' => $item->name . ' - ' . $productType->categoryName,
                     'regular_price' => $item->price->amount,
                     'description' => $item->description,
                     'short_description' => $item->description,
@@ -140,25 +140,27 @@ function set_spreadshirt_products()
                 $attribute->set_position(0);
                 //If enabled
                 $attribute->set_visible(1);
+
                 //If we are going to use attribute in order to generate variations
                 $attribute->set_variation(1);
 
                 //Save main product to get its id
                 $id = createProduct($product_data, $attribute);
-                $variation = new WC_Product_Variation();
-                $variation->set_regular_price(10);
-                $variation->set_parent_id($id);
-                //Set attributes requires a key/value containing
+                update_post_meta($id, 'image_meta_url', $product_data['image']);
+                wp_set_object_terms($id, $productType->categoryName, 'product_cat');
+                wp_set_object_terms($id, $product_data['tags'], 'product_tag');
 
-                // tax and term slug
-                $variation->set_attributes(array(
-                    'color' => 'blue' // -> removed 'pa_' prefix
-                ));
+                foreach ($colors as $color) {
+                    $variation = new WC_Product_Variation();
+                    $variation->set_regular_price($item->price->amount);
+                    $variation->set_parent_id($id);
 
-                
-                //Save variation, returns variation id
-                echo get_permalink($variation->save());
-                // echo get_permalink( $id ); // -> returns a link to check the 
+                    $variation->set_attributes(array(
+                        'color' => $color // -> removed 'pa_' prefix
+                    ));
+
+                    $variation->save();
+                }
             }
         } catch (Exception $ex) {
             return;
