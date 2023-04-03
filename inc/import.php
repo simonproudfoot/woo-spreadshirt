@@ -113,8 +113,8 @@ function set_spreadshirt_products()
         $productType = get_spreadshirt_data('productTypes/' . $item->productTypeId);
         try {
             if (strlen($productType->categoryName) > 1) {
-                //Create main product
-                $product = new WC_Product_Variable();
+                // get colors
+                $colors = getProductColors($item->productTypeId);
 
                 $product_data = array(
                     'SKU' => $item->sellableId,
@@ -134,28 +134,28 @@ function set_spreadshirt_products()
                 //pa_size tax id
                 $attribute->set_id(0); // -> SET to 0
                 //pa_size slug
-                $attribute->set_name('size'); // -> removed 'pa_' prefix
+                $attribute->set_name('color'); // -> removed 'pa_' prefix
                 //Set terms slugs
-                $attribute->set_options(array(
-                    'blue',
-                    'grey'
-                ));
+                $attribute->set_options($colors);
                 $attribute->set_position(0);
                 //If enabled
                 $attribute->set_visible(1);
                 //If we are going to use attribute in order to generate variations
                 $attribute->set_variation(1);
-              
+
                 //Save main product to get its id
                 $id = createProduct($product_data, $attribute);
                 $variation = new WC_Product_Variation();
                 $variation->set_regular_price(10);
                 $variation->set_parent_id($id);
                 //Set attributes requires a key/value containing
+
                 // tax and term slug
                 $variation->set_attributes(array(
-                    'size' => 'blue' // -> removed 'pa_' prefix
+                    'color' => 'blue' // -> removed 'pa_' prefix
                 ));
+
+                
                 //Save variation, returns variation id
                 echo get_permalink($variation->save());
                 // echo get_permalink( $id ); // -> returns a link to check the 
