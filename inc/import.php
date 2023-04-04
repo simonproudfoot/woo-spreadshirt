@@ -1,40 +1,26 @@
 <?php
-function get_spreadshirt_data($endPoint)
-{
-    $curl = curl_init();
-    $url = 'https://api.spreadshirt.net/api/v1/shops/101082106/' . $endPoint . '?mediaType=json&fullData=true';
-    curl_setopt_array($curl, array(
-        CURLOPT_URL => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => array(
-            'Authorization: SprdAuth apiKey="dd30b4db-8cd6-4fb8-86b3-e680984b9e18"',
-            'User-Agent: greenwich/1.0',
-            'Access-Control-Allow-Origin: *',
-        ),
-    ));
-    $response = curl_exec($curl);
-    if (curl_errno($curl)) {
-        echo 'Error: ' . curl_error($curl);
-    } else {
-        return json_decode($response);
-    }
-    curl_close($curl);
-}
-
-
 
 function set_spreadshirt_products()
 {
-    $response = get_spreadshirt_data('sellables');
+    $response = get_spreadshirt_data('sellables', null);
     $allItems = $response->sellables;
     foreach ($allItems as $item) {
-        $productType = get_spreadshirt_data('productTypes/' . $item->productTypeId);
+        $productType = get_spreadshirt_data('productTypes/' . $item->productTypeId, null);
         try {
             if (strlen($productType->categoryName) > 1) {
-                // get colors
+                // get variations
                 $colors = getProductColors($item->productTypeId);
-                $sizes = getProductSizes($item->productTypeId);
+                $colorNames = array_map(function ($item) {
+                    return $item['name'];
+                }, $colors);
 
+                $sizes = getProductSizes($item->productTypeId);
+                $sizesNames = array_map(function ($item) {
+                    return $item['name'];
+                }, $sizes);
+
+
+        
                 $product_data = array(
                     'SKU' => $item->sellableId,
                     'parent' => null,
@@ -51,7 +37,7 @@ function set_spreadshirt_products()
                 $size_attribute = new WC_Product_Attribute();
                 $size_attribute->set_id(0);
                 $size_attribute->set_name('size');
-                $size_attribute->set_options($sizes);
+                $size_attribute->set_options($sizesNames);
                 $size_attribute->set_position(1);
                 $size_attribute->set_visible(1);
                 $size_attribute->set_variation(1);
@@ -59,7 +45,7 @@ function set_spreadshirt_products()
                 $color_attribute = new WC_Product_Attribute();
                 $color_attribute->set_id(0);
                 $color_attribute->set_name('color');
-                $color_attribute->set_options($colors);
+                $color_attribute->set_options($colorNames);
                 $color_attribute->set_position(0);
                 $color_attribute->set_visible(1);
                 $color_attribute->set_variation(1);
@@ -71,12 +57,17 @@ function set_spreadshirt_products()
                 update_post_meta($id, 'image_meta_url', $product_data['image']);
                 wp_set_object_terms($id, array($productType->name, $productType->categoryName), 'product_cat');
 
+                update_post_meta($id, 'image_meta_url', $product_data['image']);
+                update_post_meta($id, '_knawatfibu_url', $product_data['image']);
 
-                
+                update_post_meta($id, 'size_ids', $sizes);
+                update_post_meta($id, 'color_ids', $colors);
 
                 wp_set_object_terms($id, $product_data['tags'], 'product_tag');
 
-                foreach ($colors as $color) {
+
+
+                foreach ($colorNames as $color) {
                     $color_variation = new WC_Product_Variation();
                     $color_variation->set_regular_price($item->price->amount);
                     $color_variation->set_parent_id($id);
@@ -86,9 +77,9 @@ function set_spreadshirt_products()
                     $color_variation->save();
                 }
 
-                foreach ($sizes as $size) {
+                foreach ($sizesNames as $size) {
                     $size_variation = new WC_Product_Variation();
-                    $size_variation->set_regular_price($size->price->amount);
+                    $size_variation->set_regular_price($item->price->amount);
                     $size_variation->set_parent_id($id);
                     $size_variation->set_attributes(array(
                         'size' => $size
@@ -118,27 +109,27 @@ function createProduct($product_data, $attributes)
 
 function getProductColors($productTypeId)
 {
-    $ptype = get_spreadshirt_data('productTypes/' . $productTypeId);
+    $ptype = get_spreadshirt_data('productTypes/' . $productTypeId, null);
     $colors = array();
     $variations = $ptype->appearances;
 
     foreach ($variations as $color) {
         if (!in_array($color->name, $colors)) {
-            array_push($colors, $color->name);
+            array_push($colors, array('id' => $color->id, 'name' => $color->name));
         }
     }
-    // }
     return $colors;
 }
 
 
+
 function getProductSizes($productTypeId)
 {
-    $data = get_spreadshirt_data('productTypes/' . $productTypeId)->sizes;
+    $data = get_spreadshirt_data('productTypes/' . $productTypeId, null)->sizes;
     $sizes = array();
     foreach ($data as $size) {
         if (!in_array($size->name, $sizes)) {
-            array_push($sizes, $size->name);
+            array_push($sizes, array('id' => $size->id, 'name' => $size->name));
         }
     }
     return $sizes;
@@ -147,12 +138,21 @@ function getProductSizes($productTypeId)
 
 function test()
 {
-    $response = get_spreadshirt_data('sellables');
-    $id = $response->sellables[0]->productTypeId;
-    $ptype = get_spreadshirt_data('productTypes/' . $id);
+    $response = get_spreadshirt_data('sellables', null);
+    //$id = $response->sellables[0]->productTypeId;
+    // $ptype = get_spreadshirt_data('productTypes/' . $id);
     echo '<pre>';
-    var_dump($ptype);
+    // var_dump($response);
     echo '</pre>';
 }
 
 //add_action('init', 'test');
+
+add_action('admin_head-edit.php', 'my_custom_button_in_all_products_page');
+function my_custom_button_in_all_products_page()
+{
+    global $pagenow;
+    if ($pagenow === 'edit.php' && isset($_GET['post_type']) && $_GET['post_type'] === 'product') {
+        echo '<button class="button" onclick="set_spreadshirt_products()">Set Spreadshirt Products</button>';
+    }
+}

@@ -67,6 +67,9 @@ register_activation_hook( __FILE__, array( 'VwpPluginActivate', 'activate' ) );
 require_once plugin_dir_path(__FILE__)  . 'inc/vwp-plugin-deactivate.php';
 register_deactivation_hook( __FILE__, array( 'VwpPluginDeactivate', 'deactivate' ) );
 
+// Connect to Spreadshirt
+require_once plugin_dir_path(__FILE__)  . 'inc/spread-api.php';
+
 // Import
 require_once plugin_dir_path(__FILE__)  . 'inc/import.php';
 
@@ -78,6 +81,7 @@ require_once plugin_dir_path(__FILE__)  . 'inc/rest-api.php';
 
 // Convert Woo cart to Spreadshirt cart
 require_once plugin_dir_path(__FILE__)  . 'inc/cart.php';
+
 
 
 
