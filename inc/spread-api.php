@@ -26,39 +26,38 @@ function get_spreadshirt_data($endPoint, $postData)
     curl_close($curl);
 }
 
-function get_spreadshirt_basket($postData)
+
+function get_spreadshirt_basket($postData, $basketId)
 {
-    // Set the cURL options
-    $curl_options = array(
-        CURLOPT_URL => 'https://api.spreadshirt.net/api/v1/baskets?mediaType=json',
+    $params = $basketId !== null ? '/' . $basketId : '';
+    $url = 'https://api.spreadshirt.net/api/v1/baskets' . $params . '?mediaType=json';
+
+    $curl = curl_init();
+
+    curl_setopt_array($curl, array(
+        CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => json_encode($postData),
         CURLOPT_HTTPHEADER => array(
             'Authorization: SprdAuth apiKey="dd30b4db-8cd6-4fb8-86b3-e680984b9e18"',
             'User-Agent: greenwich/1.0',
             'Access-Control-Allow-Origin: *',
         ),
-    );
-    // Initialize cURL
-    $curl = curl_init();
+    ));
+    if (($postData && $postData !== null)) {
+        curl_setopt($curl, CURLOPT_POST, true);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $postData);
+    } else {
+        curl_setopt($curl, CURLOPT_HTTPGET, true);
+    }
 
-    // Set the cURL options
-    curl_setopt_array($curl, $curl_options);
-
-    // Execute the cURL request
     $response = json_decode(curl_exec($curl));
-  
     return $response;
 
-    // Check for errors
-    if (curl_errno($curl)) {
-        // Log the error or display an error message to the user
-        error_log('Failed to convert cart to Spreadshirt basket: ' . curl_error($curl));
-        // Add your own error handling code here
-    } else {
 
+    if (curl_errno($curl)) {
+
+        error_log('Failed to convert cart to Spreadshirt basket: ' . curl_error($curl));
+    } else {
     }
-    // Close the cURL session
     curl_close($curl);
 }

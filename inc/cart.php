@@ -22,7 +22,7 @@ function convert_cart_to_spreadshirt_basket()
         $variation_id = $cart_item['variation_id'];
         $quantity = $cart_item['quantity'];
 
-        // Get the product and variation details
+
         $product = wc_get_product($product_id);
         $variation = wc_get_product($variation_id);
         $variation = $cart_item['variation'];
@@ -30,7 +30,6 @@ function convert_cart_to_spreadshirt_basket()
         $sizeName = $variation['attribute_size'];
         $sizeid = convertID($sizeName, $product_id, 'size_ids');
         $colorid = convertID($colorName, $product_id, 'color_ids');
-
 
         // Add the item to the request data
         $request_data['basketItems'][] = array(
@@ -59,16 +58,14 @@ function convert_cart_to_spreadshirt_basket()
 
 function checkout_redirect()
 {
-    // Check if the current page slug is "checkout"
     if (is_page('checkout')) {
         $cartData = convert_cart_to_spreadshirt_basket();
-        $response = get_spreadshirt_basket($cartData);
-
-        $basketId = $response->id;
-        $basketUrl = $response->href;
-        // var_dump($response->href);
-        // Redirect to your desired URL
-       // wp_redirect($response->href);
+        $responseA = get_spreadshirt_basket($cartData, null);
+        $basketId = $responseA->id;
+        $responseB = get_spreadshirt_basket(null, $basketId);
+        $basketUrl = $responseB->links[0]->href;
+        var_dump($basketUrl);
+        wp_redirect($basketUrl);
         exit;
     }
 }
