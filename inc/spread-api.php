@@ -1,13 +1,16 @@
 <?php
+$apiKey = 'dd30b4db-8cd6-4fb8-86b3-e680984b9e18';
+
 function get_spreadshirt_data($endPoint, $postData)
 {
+    global $apiKey;
     $curl = curl_init();
     $url = 'https://api.spreadshirt.net/api/v1/shops/101082106/' . $endPoint . '?mediaType=json&fullData=true';
     curl_setopt_array($curl, array(
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPHEADER => array(
-            'Authorization: SprdAuth apiKey="dd30b4db-8cd6-4fb8-86b3-e680984b9e18"',
+            'Authorization: SprdAuth apiKey="' . $apiKey . '"',
             'User-Agent: greenwich/1.0',
             'Access-Control-Allow-Origin: *',
         ),
@@ -29,6 +32,7 @@ function get_spreadshirt_data($endPoint, $postData)
 
 function get_spreadshirt_basket($postData, $basketId)
 {
+    global $apiKey;
     $params = $basketId !== null ? '/' . $basketId : '';
     $url = 'https://api.spreadshirt.net/api/v1/baskets' . $params . '?mediaType=json';
 
@@ -38,7 +42,7 @@ function get_spreadshirt_basket($postData, $basketId)
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPHEADER => array(
-            'Authorization: SprdAuth apiKey="dd30b4db-8cd6-4fb8-86b3-e680984b9e18"',
+            'Authorization: SprdAuth apiKey="' . $apiKey . '"',
             'User-Agent: greenwich/1.0',
             'Access-Control-Allow-Origin: *',
         ),
@@ -64,6 +68,7 @@ function get_spreadshirt_basket($postData, $basketId)
 
 function get_spreadshirt_currency($currenctId)
 {
+    global $apiKey;
     $url = 'https://api.spreadshirt.net/api/v1/currencies/' . $currenctId . '?mediaType=json';
     $curl = curl_init();
     curl_setopt_array($curl, array(
@@ -71,7 +76,7 @@ function get_spreadshirt_currency($currenctId)
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPGET => true,
         CURLOPT_HTTPHEADER => array(
-            'Authorization: SprdAuth apiKey="dd30b4db-8cd6-4fb8-86b3-e680984b9e18"',
+            'Authorization: SprdAuth apiKey="' . $apiKey . '"',
             'User-Agent: greenwich/1.0',
             'Access-Control-Allow-Origin: *',
         ),

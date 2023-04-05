@@ -1,14 +1,8 @@
 <template>
-<div>
+<div v-if="visible" class="wooSpeadBar">
     <div>
-        <h1>Products</h1>
         <button :disabled="loadingproducts" @click="importItems('products')">{{ loadingproducts ? 'Importing' : 'Import products' }}</button>
         <button :disabled="deletingproducts" @click="deleteItems('products')">{{ deletingproducts ? 'Deleting' : 'Delete all products' }}</button>
-    </div>
-    <div>
-        <h1>Categories</h1>
-        <button :disabled="loadingcategories" @click="importItems('categories')">{{ loadingcategories ? 'Importing' : 'Import categories' }}</button>
-        <button :disabled="deletingcategories" @click="deleteItems('categories')">{{ deletingcategories ? 'Deleting' : 'Delete all categories' }}</button>
     </div>
 </div>
 </template>
@@ -21,8 +15,17 @@ export default {
             deletingProducts: false,
             loadingcategories: false,
             deletingcategories: false,
+            visible: false
         }
     },
+    created() {
+        const urlParams = new URLSearchParams(window.location.search)
+        const postType = urlParams.get('post_type')
+        if (postType === 'product') {
+            this.visible = true
+        }
+    },
+
     methods: {
         importItems(items) {
             this['loading' + items] = true
@@ -36,6 +39,7 @@ export default {
                 .then((response) => {
                     console.log(response)
                     this['loading' + items] = false
+                    location.reload();
                 })
                 .catch(error => console.error(error));
         },
@@ -52,6 +56,7 @@ export default {
                 .then((response) => {
                     console.log(response)
                     this['deleting' + items] = false
+                    location.reload();
                 })
                 .catch(error => console.error(error));
         },
@@ -60,4 +65,12 @@ export default {
 </script>
 
 <style lang="css" scoped>
+.wooSpeadBar {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: auto;
+    background-color: red;
+    padding: 1em;
+}
 </style>

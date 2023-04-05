@@ -63,7 +63,7 @@ function checkout_redirect()
         $responseA = get_spreadshirt_basket($cartData, null);
         $basketId = $responseA->id;
         $responseB = get_spreadshirt_basket(null, $basketId);
-        $basketUrl = $responseB->links[0]->href;
+        $basketUrl = $responseB->links[2]->href;
         var_dump($basketUrl);
         wp_redirect($basketUrl);
         exit;
