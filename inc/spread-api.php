@@ -61,3 +61,26 @@ function get_spreadshirt_basket($postData, $basketId)
     }
     curl_close($curl);
 }
+
+function get_spreadshirt_currency($currenctId)
+{
+    $url = 'https://api.spreadshirt.net/api/v1/currencies/' . $currenctId . '?mediaType=json';
+    $curl = curl_init();
+    curl_setopt_array($curl, array(
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPGET => true,
+        CURLOPT_HTTPHEADER => array(
+            'Authorization: SprdAuth apiKey="dd30b4db-8cd6-4fb8-86b3-e680984b9e18"',
+            'User-Agent: greenwich/1.0',
+            'Access-Control-Allow-Origin: *',
+        ),
+    ));
+    $response = json_decode(curl_exec($curl));
+    return $response;
+    if (curl_errno($curl)) {
+        error_log('Failed to convert cart to Spreadshirt basket: ' . curl_error($curl));
+    } else {
+    }
+    curl_close($curl);
+}
