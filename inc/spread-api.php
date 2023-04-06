@@ -1,11 +1,12 @@
 <?php
 $apiKey = 'dd30b4db-8cd6-4fb8-86b3-e680984b9e18';
 
-function get_spreadshirt_data($endPoint, $postData)
+function get_spreadshirt_data($endPoint, $postData, $page)
 {
     global $apiKey;
+    $pageOffset = $page != null? '&page='.$page : '';
     $curl = curl_init();
-    $url = 'https://api.spreadshirt.net/api/v1/shops/101082106/' . $endPoint . '?mediaType=json&fullData=true';
+    $url = 'https://api.spreadshirt.net/api/v1/shops/101082106/' . $endPoint . '?mediaType=json&fullData=true'.$pageOffset;
     curl_setopt_array($curl, array(
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,

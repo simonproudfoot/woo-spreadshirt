@@ -1,98 +1,121 @@
 <?php
-
-function set_spreadshirt_products()
+//add_action('init', 'updateAll');
+function updateAll()
 {
-    $response = get_spreadshirt_data('sellables', null);
-    $allItems = $response->sellables;
-    foreach ($allItems as $item) {
-        $productType = get_spreadshirt_data('productTypes/' . $item->productTypeId, null);
+    $allStoreItems = array();
+    $responseCount = get_spreadshirt_data('sellables?', null, null); // get inital count
+    $count = $responseCount->count;
+    $limit = $responseCount->limit;
+    $loops = ceil($count / $limit);
+
+    echo $limit . ' Limit<br/>';
+    echo $loops . ' Loops<br/>';
+    echo $count . ' Total items<br/>';
+
+    for ($i = 0; $i <= $loops; $i++) {
         try {
-            if (strlen($productType->categoryName) > 1) {
-                // get variations
-                $colors = getProductColors($item->productTypeId);
-                $colorNames = array_map(function ($item) {
-                    return $item['name'];
-                }, $colors);
-
-                $sizes = getProductSizes($item->productTypeId);
-                $sizesNames = array_map(function ($item) {
-                    return $item['name'];
-                }, $sizes);
-
-
-                $product_data = array(
-                    'SKU' => $item->sellableId,
-                    'parent' => null,
-                    'name' => $item->name . ' - ' . $productType->categoryName,
-                    'regular_price' => $item->price->amount,
-                    'description' => $productType->description,
-                    'short_description' => $item->description,
-                    'tags' => $item->tags,
-                    'image' =>  $item->previewImage->url,
-                    'type' => 'simple',
-                    'status' => 'publish',
-                );
-
-                $size_attribute = new WC_Product_Attribute();
-                $size_attribute->set_id(0);
-                $size_attribute->set_name('size');
-                $size_attribute->set_options($sizesNames);
-                $size_attribute->set_position(1);
-                $size_attribute->set_visible(1);
-                $size_attribute->set_variation(1);
-
-                $color_attribute = new WC_Product_Attribute();
-                $color_attribute->set_id(0);
-                $color_attribute->set_name('color');
-                $color_attribute->set_options($colorNames);
-                $color_attribute->set_position(0);
-                $color_attribute->set_visible(1);
-                $color_attribute->set_variation(1);
-
-                $attributes = array($size_attribute, $color_attribute);
-
-                //Save main product to get its id
-                $id = createProduct($product_data, $attributes);
-                update_post_meta($id, 'image_meta_url', $product_data['image']);
-                wp_set_object_terms($id, array($productType->name, $productType->categoryName), 'product_cat');
-
-                update_post_meta($id, 'image_meta_url', $product_data['image']);
-                update_post_meta($id, '_knawatfibu_url', $product_data['image']);
-
-                update_post_meta($id, 'size_ids', $sizes);
-                update_post_meta($id, 'color_ids', $colors);
-
-                wp_set_object_terms($id, $product_data['tags'], 'product_tag');
-
-
-
-                foreach ($colorNames as $color) {
-                    $color_variation = new WC_Product_Variation();
-                    $color_variation->set_regular_price($item->price->amount);
-                    $color_variation->set_parent_id($id);
-                    $color_variation->set_attributes(array(
-                        'color' => $color
-                    ));
-                    $color_variation->save();
-                }
-
-                foreach ($sizesNames as $size) {
-                    $size_variation = new WC_Product_Variation();
-                    $size_variation->set_regular_price($item->price->amount);
-                    $size_variation->set_parent_id($id);
-                    $size_variation->set_attributes(array(
-                        'size' => $size
-                    ));
-
-                    $size_variation->save();
-                }
+            $response = get_spreadshirt_data('sellables', null, $i);
+            foreach ($response->sellables as $selable) {
+                array_push($allStoreItems, $selable);
             }
-        } catch (Exception $ex) {
-            return;
+            if ($i == $loops) {
+            }
+        } finally {
+            set_spreadshirt_products($allStoreItems);
         }
     }
 }
+function test_loop($allStoreItems)
+{
 
+    echo '<h1>' . count($allStoreItems) . '</h1>';
+    foreach ($allStoreItems as $item) {
+        print_r($item->productTypeId);
+    }
+}
+
+function set_spreadshirt_products($allItems)
+{
+    foreach ($allItems as $item) {
+        try {
+            $productType = get_spreadshirt_data('productTypes/' . $item->productTypeId, null, null);
+            if (strlen($productType->categoryName) > 1 && $item->sellableId) {
+                $productID = wc_get_product_id_by_sku($item->sellableId);
+                if (empty($productID)) {
+                    // get variations
+                    $colors = getProductColors($item->productTypeId);
+                    $colorNames = array_map(function ($item) {
+                        return $item['name'];
+                    }, $colors);
+                    $sizes = getProductSizes($item->productTypeId);
+                    $sizesNames = array_map(function ($item) {
+                        return $item['name'];
+                    }, $sizes);
+                    $product_data = array(
+                        'SKU' => $item->sellableId,
+                        'parent' => null,
+                        'name' => $item->name . ' - ' . $productType->categoryName,
+                        'regular_price' => $item->price->amount,
+                        'description' => $productType->description,
+                        'short_description' => $item->description,
+                        'tags' => $item->tags,
+                        'image' =>  $item->previewImage->url,
+                        'type' => 'simple',
+                        'status' => 'publish',
+                    );
+                    $size_attribute = new WC_Product_Attribute();
+                    $size_attribute->set_id(0);
+                    $size_attribute->set_name('size');
+                    $size_attribute->set_options($sizesNames);
+                    $size_attribute->set_position(1);
+                    $size_attribute->set_visible(1);
+                    $size_attribute->set_variation(1);
+                    $color_attribute = new WC_Product_Attribute();
+                    $color_attribute->set_id(0);
+                    $color_attribute->set_name('color');
+                    $color_attribute->set_options($colorNames);
+                    $color_attribute->set_position(0);
+                    $color_attribute->set_visible(1);
+                    $color_attribute->set_variation(1);
+                    $attributes = array($size_attribute, $color_attribute);
+                    //Save main product to get its id
+                    $id = createProduct($product_data, $attributes);
+                    update_post_meta($id, 'image_meta_url', $product_data['image']);
+                    wp_set_object_terms($id, array($productType->name, $productType->categoryName), 'product_cat');
+                    update_post_meta($id, 'image_meta_url', $product_data['image']);
+                    update_post_meta($id, '_knawatfibu_url', $product_data['image']);
+                    update_post_meta($id, 'size_ids', $sizes);
+                    update_post_meta($id, 'color_ids', $colors);
+                    wp_set_object_terms($id, $product_data['tags'], 'product_tag');
+                    foreach ($colorNames as $color) {
+                        $color_variation = new WC_Product_Variation();
+                        $color_variation->set_regular_price($item->price->amount);
+                        $color_variation->set_parent_id($id);
+                        $color_variation->set_attributes(array(
+                            'color' => $color
+                        ));
+                        $color_variation->save();
+                    }
+                    foreach ($sizesNames as $size) {
+                        $size_variation = new WC_Product_Variation();
+                        $size_variation->set_regular_price($item->price->amount);
+                        $size_variation->set_parent_id($id);
+                        $size_variation->set_attributes(array(
+                            'size' => $size
+                        ));
+                        $size_variation->save();
+                    }
+                }
+            }
+        } catch (Exception $ex) {
+            echo $ex;
+            return;
+        }
+        finally{
+            return true;
+        }
+    }
+}
 function createProduct($product_data, $attributes)
 {
     // create product 
@@ -105,13 +128,11 @@ function createProduct($product_data, $attributes)
     $product_id = $product->save();
     return $product_id;
 }
-
 function getProductColors($productTypeId)
 {
-    $ptype = get_spreadshirt_data('productTypes/' . $productTypeId, null);
+    $ptype = get_spreadshirt_data('productTypes/' . $productTypeId, null, null);
     $colors = array();
     $variations = $ptype->appearances;
-
     foreach ($variations as $color) {
         if (!in_array($color->name, $colors)) {
             array_push($colors, array('id' => $color->id, 'name' => $color->name));
@@ -119,12 +140,9 @@ function getProductColors($productTypeId)
     }
     return $colors;
 }
-
-
-
 function getProductSizes($productTypeId)
 {
-    $data = get_spreadshirt_data('productTypes/' . $productTypeId, null)->sizes;
+    $data = get_spreadshirt_data('productTypes/' . $productTypeId, null, null)->sizes;
     $sizes = array();
     foreach ($data as $size) {
         if (!in_array($size->name, $sizes)) {
@@ -133,21 +151,16 @@ function getProductSizes($productTypeId)
     }
     return $sizes;
 }
-
-
 function test()
 {
-    $response = get_spreadshirt_data('sellables', null);
+    $response = get_spreadshirt_data('sellables', null, null, null);
     $id = $response->sellables[0]->productTypeId;
-    $ptype = get_spreadshirt_data('productTypes/' . $id, null);
+    $ptype = get_spreadshirt_data('productTypes/' . $id, null, null);
     echo '<pre>';
-     //var_dump($ptype->appearances[0]->printTypes);
-     var_dump($response);
+    //var_dump($ptype->appearances[0]->printTypes);
+    var_dump($response);
     echo '</pre>';
 }
-
-add_action('init', 'test');
-
 add_action('admin_head-edit.php', 'my_custom_button_in_all_products_page');
 function my_custom_button_in_all_products_page()
 {

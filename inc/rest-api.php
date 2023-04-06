@@ -3,7 +3,7 @@
 add_action('rest_api_init', function () {
     register_rest_route('api/v1', '/get-products/', array(
         'methods' => 'GET',
-        'callback' => 'set_spreadshirt_products',
+        'callback' => 'updateAll',
     ));
     register_rest_route('api/v1', '/delete-products/', array(
         'methods' => 'GET',
