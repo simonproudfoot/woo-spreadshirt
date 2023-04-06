@@ -5,9 +5,12 @@
     <input type="text" name="key" id="">
     <br>
     <br>
-
     <label for="key">Shop ID</label><br>
     <input type="text" name="key" id="">
+    <br>
+    <br>
+    <label for="slug">Checkout page slug</label><br>
+    <input type="text" name="slug" id="" placeholder="checkout">
 </div>
 </template>
 
@@ -22,10 +25,11 @@ export default {
             visible: false
         }
     },
+
     created() {
         const urlParams = new URLSearchParams(window.location.search)
         const postType = urlParams.get('page')
-        if (postType === 'vwp_plugin') {
+        if (postType === 'wooSpread_plugin') {
             this.visible = true
         }
     },

@@ -20,7 +20,6 @@ function set_spreadshirt_products()
                 }, $sizes);
 
 
-        
                 $product_data = array(
                     'SKU' => $item->sellableId,
                     'parent' => null,
@@ -139,14 +138,15 @@ function getProductSizes($productTypeId)
 function test()
 {
     $response = get_spreadshirt_data('sellables', null);
-    //$id = $response->sellables[0]->productTypeId;
-    // $ptype = get_spreadshirt_data('productTypes/' . $id);
+    $id = $response->sellables[0]->productTypeId;
+    $ptype = get_spreadshirt_data('productTypes/' . $id, null);
     echo '<pre>';
-    // var_dump($response);
+     //var_dump($ptype->appearances[0]->printTypes);
+     var_dump($response);
     echo '</pre>';
 }
 
-//add_action('init', 'test');
+add_action('init', 'test');
 
 add_action('admin_head-edit.php', 'my_custom_button_in_all_products_page');
 function my_custom_button_in_all_products_page()

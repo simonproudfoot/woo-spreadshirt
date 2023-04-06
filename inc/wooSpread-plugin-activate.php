@@ -1,6 +1,6 @@
 <?php
 
-class VwpPluginActivate
+class wooSpreadPluginActivate
 {
   public static function activate() {
     flush_rewrite_rules();

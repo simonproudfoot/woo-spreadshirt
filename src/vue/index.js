@@ -8,6 +8,6 @@ new Vue({
 
 
 new Vue({
-  el: '#vwp-plugin',
+  el: '#wooSpread-plugin',
   render: h => h(pluginSettings),
 });

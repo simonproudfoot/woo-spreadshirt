@@ -1,5 +1,5 @@
 
-<div id="vwp-plugin"></div>
+<div id="wooSpread-plugin"></div>
 
 <?php if ( preg_match("/(.*.loc|localhost:.*|.*.local)/i", $_SERVER['HTTP_HOST']) ) : ?>
   <!-- BrowserSync for local development -->

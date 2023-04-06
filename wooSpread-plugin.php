@@ -17,7 +17,7 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-class VwpPlugin
+class wooSpreadPlugin
 {
   public $plugin;
 
@@ -32,7 +32,7 @@ class VwpPlugin
   }
 
   public function settings_link( $links ) {
-    $settings_link = '<a href="admin.php?page=vwp_plugin">Settings</a>';
+    $settings_link = '<a href="admin.php?page=wooSpread_plugin">Settings</a>';
     array_push($links, $settings_link);
     return $links;
   }
@@ -46,7 +46,7 @@ class VwpPlugin
   }
 
   public function add_admin_page() {
-    add_menu_page("Woo Spreadshirt", 'Woo Spreadshirt', 'manage_options', 'vwp_plugin', array($this, 'admin_index'), '');
+    add_menu_page("Woo Spreadshirt", 'Woo Spreadshirt', 'manage_options', 'wooSpread_plugin', array($this, 'admin_index'), '');
   }
 
   public function admin_index() {
@@ -54,18 +54,18 @@ class VwpPlugin
   }
 }
 
-if ( class_exists('VwpPlugin') ) {
-  $vwpPlugin = new VwpPlugin();
-  $vwpPlugin->register();
+if ( class_exists('wooSpreadPlugin') ) {
+  $wooSpreadPlugin = new wooSpreadPlugin();
+  $wooSpreadPlugin->register();
 }
 
 // Activation
-require_once plugin_dir_path(__FILE__)  . 'inc/vwp-plugin-activate.php';
-register_activation_hook( __FILE__, array( 'VwpPluginActivate', 'activate' ) );
+require_once plugin_dir_path(__FILE__)  . 'inc/wooSpread-plugin-activate.php';
+register_activation_hook( __FILE__, array( 'wooSpreadPluginActivate', 'activate' ) );
 
 // Deactivation
-require_once plugin_dir_path(__FILE__)  . 'inc/vwp-plugin-deactivate.php';
-register_deactivation_hook( __FILE__, array( 'VwpPluginDeactivate', 'deactivate' ) );
+require_once plugin_dir_path(__FILE__)  . 'inc/wooSpread-plugin-deactivate.php';
+register_deactivation_hook( __FILE__, array( 'wooSpreadPluginDeactivate', 'deactivate' ) );
 
 // Connect to Spreadshirt
 require_once plugin_dir_path(__FILE__)  . 'inc/spread-api.php';

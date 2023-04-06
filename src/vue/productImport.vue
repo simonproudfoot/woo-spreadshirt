@@ -43,7 +43,6 @@ export default {
                 })
                 .catch(error => console.error(error));
         },
-
         deleteItems(items) {
             this['deleting' + items] = true
             const url = myVueObj.rest_url + 'api/v1/delete-' + items;
