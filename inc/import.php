@@ -29,7 +29,6 @@ function set_spreadshirt_products($allItems)
 {
 
     foreach ($allItems as $item) {
-
         try {
             $productType = get_spreadshirt_data('productTypes/' . $item->productTypeId, null, null);
             if (strlen($productType->categoryName) > 1 && $item->sellableId) {
@@ -37,6 +36,7 @@ function set_spreadshirt_products($allItems)
                 $productID = wc_get_product_id_by_sku($item->sellableId);
 
                 if (empty($productID)) {
+
 
                     $additional_data = array("ideaId" => $item->ideaId, 'appearanceIds' => $item->appearanceIds);
                     $colors = getProductColors($item->productTypeId);
@@ -86,17 +86,29 @@ function set_spreadshirt_products($allItems)
                     update_post_meta($id, 'color_ids', $colors);
                     update_post_meta($id, 'additional_data', json_encode($additional_data));
 
+                    $colorData = [];
+
                     wp_set_object_terms($id, $product_data['tags'], 'product_tag');
-                    foreach ($colorNames as $color) {
+                    foreach ($colors as $color) {
                         $color_variation = new WC_Product_Variation();
                         $color_variation->set_regular_price($item->price->amount);
                         $color_variation->set_parent_id($id);
                         $color_variation->set_attributes(array(
-                            'color' => $color
+                            'color' => $color['name']
                         ));
+                        $varID =  $color_variation->save();
 
-                        $variationId = $color_variation->save();
+                        $varDetails = array(
+                            'variantId' => $varID,
+                            'colorName' => $color['name'],
+                            'appearanceId' => $color['id']
+                        );
+
+                        array_push($colorData, $varDetails);
                     }
+
+                    update_post_meta($id, 'colors', json_encode($colorData));
+
                     foreach ($sizesNames as $size) {
                         $size_variation = new WC_Product_Variation();
                         $size_variation->set_regular_price($item->price->amount);
@@ -161,19 +173,8 @@ function getProductSizes($productTypeId)
 }
 
 
-//add_action('init', 'getVariantImages');
-
-
 function getVariantImages($sellableId, $ideaId, $appearanceId)
-// function getVariantImages()
 {
-
-
-    // test
-    // $sellableId = 'Dp4y5VBdBzCe1ZeQ59Mb-812-7';
-    // $appearanceId = 348;
-    // $ideaId = '641d9847ceea756f57df14e2';
-    // test end 
 
     $url = 'sellables/' . $sellableId . '?appearanceId=' . $appearanceId . '&ideaId=' . $ideaId;
     $data = get_spreadshirt_data($url, null, null);
@@ -184,7 +185,8 @@ function getVariantImages($sellableId, $ideaId, $appearanceId)
             $model_urls[] = $variant->url;
         }
     }
-    return $model_urls[0];
+
+    return isset($model_urls) ? $model_urls[0] : '';
 }
 
 
@@ -195,60 +197,18 @@ function change_variation_image_url_by_id($variation_id, $image_url)
 }
 
 
-// function update_variation_images_on_product_page_load()
-// {
-//     global $product;
-//     $sellableId = $product->sku;
-//     $productMeta = json_decode(get_post_meta($product->id, 'additional_data')[0], true);
-//     $ideaId = $productMeta['ideaId'];
-//     $colorVersionIds = $productMeta['appearanceIds'];
-//     echo($colorVersionIds);
-//     // $variations = $product->get_available_variations();
-//     foreach ($variations as $variation) {
-//         $variation_id = $variation['variation_id'];
-//         $new_image_url = 'https://www.urbanrider.co.uk/media/catalog/product/cache/008f5b54fa8158acf29751501a361c85/d/m/dmw41808e_shield_tee.jpg';
-//         change_variation_image_url_by_id($variation_id, $new_image_url);
-//     }
-    
-// }
-
-
-
 function update_variation_images_on_product_page_load()
 {
     global $product;
     $sellableId = $product->sku;
     $productMeta = json_decode(get_post_meta($product->id, 'additional_data')[0], true);
+    $variantData = json_decode(get_post_meta($product->id, 'colors')[0], true);
+
     $ideaId = $productMeta['ideaId'];
-
-    // match these
-    $colorVersionIds = $productMeta['appearanceIds'];
-    $variations = $product->get_available_variations();
-
-    echo '<pre>';
-    echo 'colorVersionIds';
-    var_dump($colorVersionIds);
-    echo 'variations';
-    var_dump($variations);
-    echo '</pre>';
-    //$count = 0;
-    // foreach ($colorVersionIds as $colorId) {
-    //     $new_image_url = getVariantImages($sellableId,  $ideaId, $colorId);
-    //     change_variation_image_url_by_id($variation_id[$count], $new_image_url);
-    //     $count++;
-    // }
-
-    // foreach ($variations as $variation) {
-    //     $variation_id = $variation['variation_id'];
-    //     $new_image_url = 'https://www.urbanrider.co.uk/media/catalog/product/cache/008f5b54fa8158acf29751501a361c85/d/m/dmw41808e_shield_tee.jpg';
-    //     change_variation_image_url_by_id($variation_id, $new_image_url);
-    // }
+    foreach ($variantData as $variation) {
+        $new_image_url = getVariantImages($sellableId, $ideaId, $variation['appearanceId']);
+        change_variation_image_url_by_id($variation['variantId'], $new_image_url);
+    }
 }
 
-
-
-
 add_action('woocommerce_before_single_product', 'update_variation_images_on_product_page_load');
-
-
-
