@@ -1,4 +1,6 @@
 <?php
+
+//echo $product->get_sku(); 
 //add_action('init', 'updateAll');
 function updateAll()
 {
@@ -7,10 +9,6 @@ function updateAll()
     $count = $responseCount->count;
     $limit = $responseCount->limit;
     $loops = ceil($count / $limit);
-
-    echo $limit . ' Limit<br/>';
-    echo $loops . ' Loops<br/>';
-    echo $count . ' Total items<br/>';
 
     for ($i = 0; $i <= $loops; $i++) {
         try {
@@ -25,28 +23,28 @@ function updateAll()
         }
     }
 }
-function test_loop($allStoreItems)
-{
 
-    echo '<h1>' . count($allStoreItems) . '</h1>';
-    foreach ($allStoreItems as $item) {
-        print_r($item->productTypeId);
-    }
-}
 
 function set_spreadshirt_products($allItems)
 {
+
     foreach ($allItems as $item) {
+
         try {
             $productType = get_spreadshirt_data('productTypes/' . $item->productTypeId, null, null);
             if (strlen($productType->categoryName) > 1 && $item->sellableId) {
+
                 $productID = wc_get_product_id_by_sku($item->sellableId);
+
                 if (empty($productID)) {
-                    // get variations
+
+                    $additional_data = array("ideaId" => $item->ideaId, 'appearanceIds' => $item->appearanceIds);
                     $colors = getProductColors($item->productTypeId);
+
                     $colorNames = array_map(function ($item) {
                         return $item['name'];
                     }, $colors);
+
                     $sizes = getProductSizes($item->productTypeId);
                     $sizesNames = array_map(function ($item) {
                         return $item['name'];
@@ -86,6 +84,8 @@ function set_spreadshirt_products($allItems)
                     update_post_meta($id, '_knawatfibu_url', $product_data['image']);
                     update_post_meta($id, 'size_ids', $sizes);
                     update_post_meta($id, 'color_ids', $colors);
+                    update_post_meta($id, 'additional_data', json_encode($additional_data));
+
                     wp_set_object_terms($id, $product_data['tags'], 'product_tag');
                     foreach ($colorNames as $color) {
                         $color_variation = new WC_Product_Variation();
@@ -94,7 +94,8 @@ function set_spreadshirt_products($allItems)
                         $color_variation->set_attributes(array(
                             'color' => $color
                         ));
-                        $color_variation->save();
+
+                        $variationId = $color_variation->save();
                     }
                     foreach ($sizesNames as $size) {
                         $size_variation = new WC_Product_Variation();
@@ -111,10 +112,8 @@ function set_spreadshirt_products($allItems)
             echo $ex;
             return;
         }
-        finally{
-            return true;
-        }
     }
+    return true;
 }
 function createProduct($product_data, $attributes)
 {
@@ -150,22 +149,106 @@ function getProductSizes($productTypeId)
         }
     }
     return $sizes;
-}
-function test()
-{
-    $response = get_spreadshirt_data('sellables', null, null, null);
-    $id = $response->sellables[0]->productTypeId;
-    $ptype = get_spreadshirt_data('productTypes/' . $id, null, null);
-    echo '<pre>';
-    //var_dump($ptype->appearances[0]->printTypes);
-    var_dump($response);
-    echo '</pre>';
-}
-add_action('admin_head-edit.php', 'my_custom_button_in_all_products_page');
-function my_custom_button_in_all_products_page()
-{
-    global $pagenow;
-    if ($pagenow === 'edit.php' && isset($_GET['post_type']) && $_GET['post_type'] === 'product') {
-        echo '<button class="button" onclick="set_spreadshirt_products()">Set Spreadshirt Products</button>';
+
+    add_action('admin_head-edit.php', 'my_custom_button_in_all_products_page');
+    function my_custom_button_in_all_products_page()
+    {
+        global $pagenow;
+        if ($pagenow === 'edit.php' && isset($_GET['post_type']) && $_GET['post_type'] === 'product') {
+            echo '<button class="button" onclick="set_spreadshirt_products()">Set Spreadshirt Products</button>';
+        }
     }
 }
+
+
+//add_action('init', 'getVariantImages');
+
+
+function getVariantImages($sellableId, $ideaId, $appearanceId)
+// function getVariantImages()
+{
+
+
+    // test
+    // $sellableId = 'Dp4y5VBdBzCe1ZeQ59Mb-812-7';
+    // $appearanceId = 348;
+    // $ideaId = '641d9847ceea756f57df14e2';
+    // test end 
+
+    $url = 'sellables/' . $sellableId . '?appearanceId=' . $appearanceId . '&ideaId=' . $ideaId;
+    $data = get_spreadshirt_data($url, null, null);
+    $image = $data->images;
+
+    foreach ($image as $variant) {
+        if ($variant->type === "MODEL") {
+            $model_urls[] = $variant->url;
+        }
+    }
+    return $model_urls[0];
+}
+
+
+function change_variation_image_url_by_id($variation_id, $image_url)
+{
+    update_post_meta($variation_id, '_knawatfibu_url', $image_url);
+    delete_transient('wc_var_' . $variation_id . '_get_variation_attributes');
+}
+
+
+// function update_variation_images_on_product_page_load()
+// {
+//     global $product;
+//     $sellableId = $product->sku;
+//     $productMeta = json_decode(get_post_meta($product->id, 'additional_data')[0], true);
+//     $ideaId = $productMeta['ideaId'];
+//     $colorVersionIds = $productMeta['appearanceIds'];
+//     echo($colorVersionIds);
+//     // $variations = $product->get_available_variations();
+//     foreach ($variations as $variation) {
+//         $variation_id = $variation['variation_id'];
+//         $new_image_url = 'https://www.urbanrider.co.uk/media/catalog/product/cache/008f5b54fa8158acf29751501a361c85/d/m/dmw41808e_shield_tee.jpg';
+//         change_variation_image_url_by_id($variation_id, $new_image_url);
+//     }
+    
+// }
+
+
+
+function update_variation_images_on_product_page_load()
+{
+    global $product;
+    $sellableId = $product->sku;
+    $productMeta = json_decode(get_post_meta($product->id, 'additional_data')[0], true);
+    $ideaId = $productMeta['ideaId'];
+
+    // match these
+    $colorVersionIds = $productMeta['appearanceIds'];
+    $variations = $product->get_available_variations();
+
+    echo '<pre>';
+    echo 'colorVersionIds';
+    var_dump($colorVersionIds);
+    echo 'variations';
+    var_dump($variations);
+    echo '</pre>';
+    //$count = 0;
+    // foreach ($colorVersionIds as $colorId) {
+    //     $new_image_url = getVariantImages($sellableId,  $ideaId, $colorId);
+    //     change_variation_image_url_by_id($variation_id[$count], $new_image_url);
+    //     $count++;
+    // }
+
+    // foreach ($variations as $variation) {
+    //     $variation_id = $variation['variation_id'];
+    //     $new_image_url = 'https://www.urbanrider.co.uk/media/catalog/product/cache/008f5b54fa8158acf29751501a361c85/d/m/dmw41808e_shield_tee.jpg';
+    //     change_variation_image_url_by_id($variation_id, $new_image_url);
+    // }
+}
+
+
+
+
+add_action('woocommerce_before_single_product', 'update_variation_images_on_product_page_load');
+
+
+

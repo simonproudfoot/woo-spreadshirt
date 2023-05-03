@@ -2,7 +2,7 @@
 <div v-if="visible" class="wooSpeadBar">
     <div>
         <button :disabled="loadingproducts" @click="importItems('products')">{{ loadingproducts ? 'Importing' : 'Import products' }}</button>
-        <button :disabled="deletingproducts" @click="deleteItems('products')">{{ deletingproducts ? 'Deleting' : 'Delete all products' }}</button>
+        <!-- <button :disabled="deletingproducts" @click="deleteItems('products')">{{ deletingproducts ? 'Deleting' : 'Delete all products' }}</button> -->
     </div>
 </div>
 </template>
