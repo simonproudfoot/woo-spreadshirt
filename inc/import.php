@@ -175,19 +175,30 @@ function getProductSizes($productTypeId)
 
 function getVariantImages($sellableId, $ideaId, $appearanceId)
 {
-
     $url = 'sellables/' . $sellableId . '?appearanceId=' . $appearanceId . '&ideaId=' . $ideaId;
     $data = get_spreadshirt_data($url, null, null);
-    $image = $data->images;
+    if(!isset( $data->images)){
+        return '';
+    }
+    $images = $data->images;
 
-    foreach ($image as $variant) {
-        if ($variant->type === "MODEL") {
-            $model_urls[] = $variant->url;
+    foreach ($images as $image) {
+        if ($image->type === "MODEL") {
+            return $image->url;
         }
     }
-
-    return isset($model_urls) ? $model_urls[0] : '';
+    foreach ($images as $image) {
+        if ($image->type === "PRODUCT") {
+            return $image->url;
+        }
+    }
+    foreach ($images as $image) {
+        if ($image->type === "DESIGN") {
+            return $image->url;
+        }
+    }
 }
+
 
 
 function change_variation_image_url_by_id($variation_id, $image_url)
@@ -207,6 +218,7 @@ function update_variation_images_on_product_page_load()
     $ideaId = $productMeta['ideaId'];
     foreach ($variantData as $variation) {
         $new_image_url = getVariantImages($sellableId, $ideaId, $variation['appearanceId']);
+     //   echo $new_image_url;
         change_variation_image_url_by_id($variation['variantId'], $new_image_url);
     }
 }
