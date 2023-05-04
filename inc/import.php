@@ -273,11 +273,17 @@ function save_image_to_media_library($image_url, $fileName)
 
 
 
-function change_variation_image_url_by_id($variation_id, $image_url)
+function change_variation_image_url_by_id($variation_id, $imgUrl) 
 {
-    update_post_meta($variation_id, '_knawatfibu_url', $image_url);
-    delete_transient('wc_var_' . $variation_id . '_get_variation_attributes');
+    // Get the variation object
+    $variation_obj = new WC_Product_Variation($variation_id);
+    $imgId = save_image_to_media_library($imgUrl, 'test-' . $variation_id . '.jpg');
+    // Set the new image ID for the variation
+    $variation_obj->set_image_id($imgId);
+    // Save the variation
+    $variation_obj->save();
 }
+
 
 
 function update_variation_images_on_product_page_load()
@@ -286,12 +292,9 @@ function update_variation_images_on_product_page_load()
     $sellableId = $product->sku;
     $productMeta = json_decode(get_post_meta($product->id, 'additional_data')[0], true);
     $variantData = json_decode(get_post_meta($product->id, 'colors')[0], true);
-
-
     $ideaId = $productMeta['ideaId'];
     foreach ($variantData as $variation) {
         $new_image_url = getVariantImages($sellableId, $ideaId, $variation['appearanceId']);
-           echo $new_image_url;
         change_variation_image_url_by_id($variation['variantId'], $new_image_url);
     }
 }
