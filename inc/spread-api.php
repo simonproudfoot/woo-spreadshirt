@@ -43,9 +43,7 @@ function get_image_from_api($url)
         return null;
     }
 
-    // Return the image data
-    $blob = $response;
-    return file_get_contents($blob);
+    return $response;
 }
 
 

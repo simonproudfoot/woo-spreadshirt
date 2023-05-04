@@ -62,8 +62,6 @@ function delete_all_woocommerce_attributes()
     }
 }
 
-// Call the function to delete all WooCommerce attributes
-//add_action( 'init' , 'delete_all_woocommerce_attributes');
 
 
 function delete_woo_spreadshirt_directory() {

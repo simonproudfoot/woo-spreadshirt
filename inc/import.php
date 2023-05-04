@@ -58,7 +58,7 @@ function set_spreadshirt_products($allItems)
                         'description' => $productType->description,
                         'short_description' => $item->description,
                         'tags' => $item->tags,
-                      //  'image' => save_image_to_media_library($item->previewImage->url),
+                        // 'image' => $item->previewImage->url,
                         'type' => 'simple',
                         'status' => 'publish',
                     );
@@ -80,13 +80,15 @@ function set_spreadshirt_products($allItems)
                     //Save main product to get its id
                     $id = createProduct($product_data, $attributes);
                     wp_set_object_terms($id, array($productType->name, $productType->categoryName), 'product_cat');
-                    // update_post_meta($id, 'image_meta_url', $product_data['image']);
-                    // update_post_meta($id, 'image_meta_url', $product_data['image']);
-                    // update_post_meta($id, '_knawatfibu_url', $product_data['image']);
+
+                    update_post_meta($id, 'image_meta_url', $product_data['image']);
+                    update_post_meta($id, '_knawatfibu_url', $product_data['image']);
                     update_post_meta($id, 'size_ids', $sizes);
                     update_post_meta($id, 'color_ids', $colors);
                     update_post_meta($id, 'additional_data', json_encode($additional_data));
+
                     $imageId = save_image_to_media_library($item->previewImage->url, $item->sellableId);
+
                     set_post_thumbnail($id, $imageId);
 
                     $colorData = [];
@@ -209,7 +211,7 @@ function save_image_to_media_library($image_url, $fileName)
 {
     // Download the image from the URL
     $image_data = get_image_from_api($image_url);
-    
+
     // Check if the file already exists in the media library
     $attachment_id = attachment_url_to_postid($image_url);
     if ($attachment_id) {
@@ -285,10 +287,11 @@ function update_variation_images_on_product_page_load()
     $productMeta = json_decode(get_post_meta($product->id, 'additional_data')[0], true);
     $variantData = json_decode(get_post_meta($product->id, 'colors')[0], true);
 
+
     $ideaId = $productMeta['ideaId'];
     foreach ($variantData as $variation) {
         $new_image_url = getVariantImages($sellableId, $ideaId, $variation['appearanceId']);
-     //   echo $new_image_url;
+           echo $new_image_url;
         change_variation_image_url_by_id($variation['variantId'], $new_image_url);
     }
 }
