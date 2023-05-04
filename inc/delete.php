@@ -20,6 +20,7 @@ function delete_all_products()
     }
     delete_all_product_categories();
     delete_all_woocommerce_attributes();
+    delete_woo_spreadshirt_directory();
     return true;
 }
 
@@ -63,3 +64,43 @@ function delete_all_woocommerce_attributes()
 
 // Call the function to delete all WooCommerce attributes
 //add_action( 'init' , 'delete_all_woocommerce_attributes');
+
+
+function delete_woo_spreadshirt_directory() {
+    // Specify the uploads directory and the wooSpreadshirt directory
+    $upload_dir = wp_upload_dir();
+    $woo_spreadshirt_dir = trailingslashit($upload_dir['basedir']) . 'wooSpreadshirt';
+
+    // Check if the wooSpreadshirt directory exists
+    if (file_exists($woo_spreadshirt_dir)) {
+        // Delete the wooSpreadshirt directory and all of its contents
+        $files = array_diff(scandir($woo_spreadshirt_dir), array('.', '..'));
+        foreach ($files as $file) {
+            if (is_dir("$woo_spreadshirt_dir/$file")) {
+                // Delete subdirectories and their contents
+                delete_directory("$woo_spreadshirt_dir/$file");
+            } else {
+                // Delete files
+                unlink("$woo_spreadshirt_dir/$file");
+            }
+        }
+        // Delete the wooSpreadshirt directory itself
+        rmdir($woo_spreadshirt_dir);
+    }
+}
+
+// Helper function to recursively delete a directory and its contents
+function delete_directory($dir) {
+    if (is_dir($dir)) {
+        $files = array_diff(scandir($dir), array('.', '..'));
+        foreach ($files as $file) {
+            if (is_dir("$dir/$file")) {
+                delete_directory("$dir/$file");
+            } else {
+                unlink("$dir/$file");
+            }
+        }
+        return rmdir($dir);
+    }
+    return false;
+}

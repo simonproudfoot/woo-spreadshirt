@@ -38,6 +38,7 @@ function set_spreadshirt_products($allItems)
                 if (empty($productID)) {
 
 
+
                     $additional_data = array("ideaId" => $item->ideaId, 'appearanceIds' => $item->appearanceIds);
                     $colors = getProductColors($item->productTypeId);
 
@@ -57,7 +58,7 @@ function set_spreadshirt_products($allItems)
                         'description' => $productType->description,
                         'short_description' => $item->description,
                         'tags' => $item->tags,
-                        'image' =>  $item->previewImage->url,
+                      //  'image' => save_image_to_media_library($item->previewImage->url),
                         'type' => 'simple',
                         'status' => 'publish',
                     );
@@ -78,13 +79,15 @@ function set_spreadshirt_products($allItems)
                     $attributes = array($size_attribute, $color_attribute);
                     //Save main product to get its id
                     $id = createProduct($product_data, $attributes);
-                    update_post_meta($id, 'image_meta_url', $product_data['image']);
                     wp_set_object_terms($id, array($productType->name, $productType->categoryName), 'product_cat');
-                    update_post_meta($id, 'image_meta_url', $product_data['image']);
-                    update_post_meta($id, '_knawatfibu_url', $product_data['image']);
+                    // update_post_meta($id, 'image_meta_url', $product_data['image']);
+                    // update_post_meta($id, 'image_meta_url', $product_data['image']);
+                    // update_post_meta($id, '_knawatfibu_url', $product_data['image']);
                     update_post_meta($id, 'size_ids', $sizes);
                     update_post_meta($id, 'color_ids', $colors);
                     update_post_meta($id, 'additional_data', json_encode($additional_data));
+                    $imageId = save_image_to_media_library($item->previewImage->url, $item->sellableId);
+                    set_post_thumbnail($id, $imageId);
 
                     $colorData = [];
 
@@ -177,7 +180,7 @@ function getVariantImages($sellableId, $ideaId, $appearanceId)
 {
     $url = 'sellables/' . $sellableId . '?appearanceId=' . $appearanceId . '&ideaId=' . $ideaId;
     $data = get_spreadshirt_data($url, null, null);
-    if(!isset( $data->images)){
+    if (!isset($data->images)) {
         return '';
     }
     $images = $data->images;
@@ -198,6 +201,73 @@ function getVariantImages($sellableId, $ideaId, $appearanceId)
         }
     }
 }
+
+
+
+
+function save_image_to_media_library($image_url, $fileName)
+{
+    // Download the image from the URL
+    $image_data = get_image_from_api($image_url);
+    
+    // Check if the file already exists in the media library
+    $attachment_id = attachment_url_to_postid($image_url);
+    if ($attachment_id) {
+        // If the file already exists, return the existing attachment ID
+        return $attachment_id;
+    }
+
+    // Include the image.php file for the wp_generate_attachment_metadata() function
+    require_once(ABSPATH . 'wp-admin/includes/image.php');
+
+    // Specify the uploads directory
+    $upload_dir = wp_upload_dir();
+    $upload_dir['path'] = trailingslashit($upload_dir['basedir']) . 'wooSpreadshirt/';
+    $upload_dir['url'] = trailingslashit($upload_dir['baseurl']) . 'wooSpreadshirt/';
+
+    // Create the wooSpreadshirt directory if it doesn't exist
+    if (!file_exists($upload_dir['path'])) {
+        mkdir($upload_dir['path'], 0755);
+    }
+
+    // Get the file extension from the image data
+    $file_ext = '';
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_type = finfo_buffer($finfo, $image_data);
+    finfo_close($finfo);
+    $allowed_types = array(
+        'image/jpeg' => 'jpg',
+        'image/gif' => 'gif',
+        'image/png' => 'png',
+    );
+    if (isset($allowed_types[$mime_type])) {
+        $file_ext = $allowed_types[$mime_type];
+    }
+
+    // Create a new file in the WordPress media library with the specified filename
+    $file_path = $upload_dir['path'] . $fileName . '.' . $file_ext;
+    file_put_contents($file_path, $image_data);
+
+    // Create a new attachment post in the database
+    $attachment_data = array(
+        'post_title' => sanitize_file_name($fileName),
+        'post_type' => 'attachment',
+        'post_mime_type' => $mime_type,
+        'post_content' => '',
+        'post_status' => 'inherit'
+    );
+    $attachment_id = wp_insert_attachment($attachment_data, $file_path);
+
+    // Generate metadata for the attachment post
+    $attachment_data['ID'] = $attachment_id;
+    $attachment_data['guid'] = $upload_dir['url'] . $fileName . '.' . $file_ext;
+    $attachment_metadata = wp_generate_attachment_metadata($attachment_id, $file_path);
+    wp_update_attachment_metadata($attachment_id, $attachment_metadata);
+
+    // Return the attachment ID
+    return $attachment_id;
+}
+
 
 
 
