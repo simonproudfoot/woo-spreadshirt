@@ -10,7 +10,7 @@ function updateAll()
     $limit = $responseCount->limit;
     $loops = ceil($count / $limit);
 
-    for ($i = 0; $i <= $loops; $i++) {
+    for ($i = 0; $i <= $loops+1; $i++) {
         try {
             $response = get_spreadshirt_data('sellables', null, $i);
             foreach ($response->sellables as $selable) {
@@ -289,6 +289,13 @@ function change_variation_image_url_by_id($variation_id, $imgUrl)
 function update_variation_images_on_product_page_load()
 {
     global $product;
+
+    $getImages = get_post_meta($product->id, 'variant_images_ready');
+
+    if($getImages){
+        return;
+    }
+
     $sellableId = $product->sku;
     $productMeta = json_decode(get_post_meta($product->id, 'additional_data')[0], true);
     $variantData = json_decode(get_post_meta($product->id, 'colors')[0], true);
@@ -297,6 +304,8 @@ function update_variation_images_on_product_page_load()
         $new_image_url = getVariantImages($sellableId, $ideaId, $variation['appearanceId']);
         change_variation_image_url_by_id($variation['variantId'], $new_image_url);
     }
+    update_post_meta($product->id, 'variant_images_ready', true);
+
 }
 
 add_action('woocommerce_before_single_product', 'update_variation_images_on_product_page_load');
