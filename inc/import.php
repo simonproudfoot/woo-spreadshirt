@@ -10,7 +10,7 @@ function updateAll()
     $limit = $responseCount->limit;
     $loops = ceil($count / $limit);
 
-    for ($i = 0; $i <= $loops+1; $i++) {
+    for ($i = 0; $i <= $loops; $i++) {
         try {
             $response = get_spreadshirt_data('sellables', null, $i);
             foreach ($response->sellables as $selable) {
@@ -232,7 +232,6 @@ function save_image_to_media_library($image_url, $fileName)
         mkdir($upload_dir['path'], 0755);
     }
 
-    // Get the file extension from the image data
     $file_ext = '';
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mime_type = finfo_buffer($finfo, $image_data);
@@ -246,11 +245,9 @@ function save_image_to_media_library($image_url, $fileName)
         $file_ext = $allowed_types[$mime_type];
     }
 
-    // Create a new file in the WordPress media library with the specified filename
     $file_path = $upload_dir['path'] . $fileName . '.' . $file_ext;
     file_put_contents($file_path, $image_data);
 
-    // Create a new attachment post in the database
     $attachment_data = array(
         'post_title' => sanitize_file_name($fileName),
         'post_type' => 'attachment',
@@ -260,27 +257,22 @@ function save_image_to_media_library($image_url, $fileName)
     );
     $attachment_id = wp_insert_attachment($attachment_data, $file_path);
 
-    // Generate metadata for the attachment post
     $attachment_data['ID'] = $attachment_id;
     $attachment_data['guid'] = $upload_dir['url'] . $fileName . '.' . $file_ext;
     $attachment_metadata = wp_generate_attachment_metadata($attachment_id, $file_path);
     wp_update_attachment_metadata($attachment_id, $attachment_metadata);
 
-    // Return the attachment ID
     return $attachment_id;
 }
 
 
 
 
-function change_variation_image_url_by_id($variation_id, $imgUrl) 
+function change_variation_image_url_by_id($variation_id, $imgUrl, $sellableId)
 {
-    // Get the variation object
     $variation_obj = new WC_Product_Variation($variation_id);
-    $imgId = save_image_to_media_library($imgUrl, 'test-' . $variation_id . '.jpg');
-    // Set the new image ID for the variation
+    $imgId = save_image_to_media_library($imgUrl, $sellableId . '-' . $variation_id . '.jpg');
     $variation_obj->set_image_id($imgId);
-    // Save the variation
     $variation_obj->save();
 }
 
@@ -289,23 +281,19 @@ function change_variation_image_url_by_id($variation_id, $imgUrl)
 function update_variation_images_on_product_page_load()
 {
     global $product;
-
     $getImages = get_post_meta($product->id, 'variant_images_ready');
-
-    if($getImages){
+    if ($getImages) {
         return;
     }
-
     $sellableId = $product->sku;
     $productMeta = json_decode(get_post_meta($product->id, 'additional_data')[0], true);
     $variantData = json_decode(get_post_meta($product->id, 'colors')[0], true);
     $ideaId = $productMeta['ideaId'];
     foreach ($variantData as $variation) {
         $new_image_url = getVariantImages($sellableId, $ideaId, $variation['appearanceId']);
-        change_variation_image_url_by_id($variation['variantId'], $new_image_url);
+        change_variation_image_url_by_id($variation['variantId'], $new_image_url, $sellableId);
     }
     update_post_meta($product->id, 'variant_images_ready', true);
-
 }
 
 add_action('woocommerce_before_single_product', 'update_variation_images_on_product_page_load');
