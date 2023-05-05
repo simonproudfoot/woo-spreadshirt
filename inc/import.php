@@ -94,13 +94,16 @@ function set_spreadshirt_products($allItems)
                     $colorData = [];
 
                     wp_set_object_terms($id, $product_data['tags'], 'product_tag');
-                    foreach ($colors as $color) {
+                    foreach ($colors as $key => $color) {
                         $color_variation = new WC_Product_Variation();
                         $color_variation->set_regular_price($item->price->amount);
                         $color_variation->set_parent_id($id);
                         $color_variation->set_attributes(array(
                             'color' => $color['name']
                         ));
+
+                    
+
                         $varID =  $color_variation->save();
 
                         $varDetails = array(
@@ -281,6 +284,18 @@ function change_variation_image_url_by_id($variation_id, $imgUrl, $sellableId)
 function update_variation_images_on_product_page_load()
 {
     global $product;
+    echo "<script>
+    window.addEventListener('load', function() {
+          // cheating!
+          var colorSelect = document.getElementById('color');
+          var sizeSelect = document.getElementById('size');
+          if (sizeSelect) {
+            sizeSelect.value = sizeSelect.options[1].value;
+          }
+
+      });
+    </script>";
+
     $getImages = get_post_meta($product->id, 'variant_images_ready');
     if ($getImages) {
         return;
@@ -289,7 +304,7 @@ function update_variation_images_on_product_page_load()
     $productMeta = json_decode(get_post_meta($product->id, 'additional_data')[0], true);
     $variantData = json_decode(get_post_meta($product->id, 'colors')[0], true);
     $ideaId = $productMeta['ideaId'];
-    foreach ($variantData as $variation) {
+    foreach ($variantData as $key => $variation) {
         $new_image_url = getVariantImages($sellableId, $ideaId, $variation['appearanceId']);
         change_variation_image_url_by_id($variation['variantId'], $new_image_url, $sellableId);
     }
@@ -297,3 +312,6 @@ function update_variation_images_on_product_page_load()
 }
 
 add_action('woocommerce_before_single_product', 'update_variation_images_on_product_page_load');
+
+
+

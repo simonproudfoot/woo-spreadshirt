@@ -20,7 +20,7 @@ function delete_all_products()
     }
     delete_all_product_categories();
     delete_all_woocommerce_attributes();
-    delete_woo_spreadshirt_directory();
+    delete_woo_spreadshirt_folder();
     return true;
 }
 
@@ -62,43 +62,24 @@ function delete_all_woocommerce_attributes()
     }
 }
 
-
-
-function delete_woo_spreadshirt_directory() {
-    // Specify the uploads directory and the wooSpreadshirt directory
-    $upload_dir = wp_upload_dir();
-    $woo_spreadshirt_dir = trailingslashit($upload_dir['basedir']) . 'wooSpreadshirt';
-
-    // Check if the wooSpreadshirt directory exists
-    if (file_exists($woo_spreadshirt_dir)) {
-        // Delete the wooSpreadshirt directory and all of its contents
-        $files = array_diff(scandir($woo_spreadshirt_dir), array('.', '..'));
+function delete_woo_spreadshirt_folder() {
+    $upload_dir = wp_upload_dir(); // Get the WordPress upload directory info
+    $woo_spreadshirt_dir = $upload_dir['basedir'] . '/wooSpreadshirt'; // Set the path to the folder to delete
+    
+    if (is_dir($woo_spreadshirt_dir)) {
+        // If the directory exists, delete all files and subdirectories recursively
+        $files = array_diff(scandir($woo_spreadshirt_dir), array('.','..'));
         foreach ($files as $file) {
-            if (is_dir("$woo_spreadshirt_dir/$file")) {
-                // Delete subdirectories and their contents
-                delete_directory("$woo_spreadshirt_dir/$file");
-            } else {
-                // Delete files
-                unlink("$woo_spreadshirt_dir/$file");
-            }
+            (is_dir("$woo_spreadshirt_dir/$file")) ? delete_directory("$woo_spreadshirt_dir/$file") : unlink("$woo_spreadshirt_dir/$file");
         }
-        // Delete the wooSpreadshirt directory itself
+        // Finally, remove the empty directory
         rmdir($woo_spreadshirt_dir);
-    }
-}
-
-// Helper function to recursively delete a directory and its contents
-function delete_directory($dir) {
-    if (is_dir($dir)) {
-        $files = array_diff(scandir($dir), array('.', '..'));
-        foreach ($files as $file) {
-            if (is_dir("$dir/$file")) {
-                delete_directory("$dir/$file");
-            } else {
-                unlink("$dir/$file");
-            }
+        
+        // Delete associated media items from the WordPress media library
+        global $wpdb;
+        $media_ids = $wpdb->get_col("SELECT ID FROM {$wpdb->posts} WHERE guid LIKE '%/wooSpreadshirt/%'"); // Get all media IDs associated with the deleted folder
+        foreach ($media_ids as $media_id) {
+            wp_delete_attachment($media_id, true); // Delete each associated media item permanently
         }
-        return rmdir($dir);
     }
-    return false;
 }
