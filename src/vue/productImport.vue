@@ -36,7 +36,7 @@ export default {
     },
 
     methods: {
-     
+
         importItems(items) {
             this['loading' + items] = true
             const url = myVueObj.rest_url + 'api/v1/get-' + items;
@@ -92,6 +92,7 @@ export default {
     cursor: pointer;
 
 }
+
 .wooSpeadBar button:hover {
     background-color: #000;
     color: #fff;

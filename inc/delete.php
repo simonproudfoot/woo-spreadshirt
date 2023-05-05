@@ -12,18 +12,6 @@ function delete_all_product_categories()
     }
 }
 
-function delete_all_products()
-{
-    $allposts = get_posts(array('post_type' => 'product', 'numberposts' => -1));
-    foreach ($allposts as $eachpost) {
-        wp_delete_post($eachpost->ID, true);
-    }
-    delete_all_product_categories();
-    delete_images_with_metadata();
-    return true;
-}
-
-
 function delete_all_woocommerce_attributes()
 {
     global $wpdb;
@@ -75,6 +63,21 @@ function delete_images_with_metadata()
     $loop = new WP_Query($args);
     while ($loop->have_posts()) : $loop->the_post();
         wp_delete_attachment(get_the_ID(), true); // Delete the attachment permanently
+    endwhile;
+}
+
+
+function delete_all_products()
+{
+    $args = array(
+        'post_type' => 'product',
+        'posts_per_page' => -1,
+        'meta_key' => 'wooSpreadProduct',
+        'meta_value' => true,
+    );
+    $loop = new WP_Query($args);
+    while ($loop->have_posts()) : $loop->the_post();
+        wp_delete_post(get_the_ID()); // Delete the attachment permanently
     endwhile;
 }
 

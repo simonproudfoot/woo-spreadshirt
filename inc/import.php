@@ -84,6 +84,7 @@ function set_spreadshirt_products($allItems)
                     update_post_meta($id, 'size_ids', $sizes);
                     update_post_meta($id, 'color_ids', $colors);
                     update_post_meta($id, 'additional_data', json_encode($additional_data));
+                    update_post_meta($id, 'wooSpreadProduct', true);
 
                     $imageId = save_image_to_media_library($item->previewImage->url, $item->sellableId);
 
@@ -336,6 +337,8 @@ function update_all_product_variant_images() {
         }
         wp_reset_postdata();
     }
+
+    return true;
 }
 
 //add_action('init', 'update_all_product_variant_images');
