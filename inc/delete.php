@@ -19,8 +19,7 @@ function delete_all_products()
         wp_delete_post($eachpost->ID, true);
     }
     delete_all_product_categories();
-    delete_all_woocommerce_attributes();
-    delete_woo_spreadshirt_folder();
+    delete_images_with_metadata();
     return true;
 }
 
@@ -55,31 +54,28 @@ function delete_all_woocommerce_attributes()
 
     foreach ($attributes as $key => $attribute) {
         $deleted = wc_delete_attribute($attribute['attribute_id']);
-                    wp_delete_term($term->term_id, $taxonomy2);
+        wp_delete_term($term->term_id, $taxonomy2);
         echo '<pre>';
         print_r(sprintf('Deleting %s - Result %s', $attribute['attribute_label'], $deleted));
         echo '</pre>';
     }
 }
 
-function delete_woo_spreadshirt_folder() {
-    $upload_dir = wp_upload_dir(); // Get the WordPress upload directory info
-    $woo_spreadshirt_dir = $upload_dir['basedir'] . '/wooSpreadshirt'; // Set the path to the folder to delete
-    
-    if (is_dir($woo_spreadshirt_dir)) {
-        // If the directory exists, delete all files and subdirectories recursively
-        $files = array_diff(scandir($woo_spreadshirt_dir), array('.','..'));
-        foreach ($files as $file) {
-            (is_dir("$woo_spreadshirt_dir/$file")) ? delete_directory("$woo_spreadshirt_dir/$file") : unlink("$woo_spreadshirt_dir/$file");
-        }
-        // Finally, remove the empty directory
-        rmdir($woo_spreadshirt_dir);
-        
-        // Delete associated media items from the WordPress media library
-        global $wpdb;
-        $media_ids = $wpdb->get_col("SELECT ID FROM {$wpdb->posts} WHERE guid LIKE '%/wooSpreadshirt/%'"); // Get all media IDs associated with the deleted folder
-        foreach ($media_ids as $media_id) {
-            wp_delete_attachment($media_id, true); // Delete each associated media item permanently
-        }
-    }
+
+function delete_images_with_metadata()
+{
+    $args = array(
+        'post_type' => 'attachment',
+        'post_mime_type' => 'image',
+        'posts_per_page' => -1,
+        'meta_key' => 'wooSpreadImage',
+        'meta_value' => true,
+        'post_status'    => 'inherit'
+    );
+    $loop = new WP_Query($args);
+    while ($loop->have_posts()) : $loop->the_post();
+        wp_delete_attachment(get_the_ID(), true); // Delete the attachment permanently
+    endwhile;
 }
+
+

@@ -5,6 +5,10 @@ add_action('rest_api_init', function () {
         'methods' => 'GET',
         'callback' => 'updateAll',
     ));
+    register_rest_route('api/v1', '/get-variants/', array(
+        'methods' => 'GET',
+        'callback' => 'update_all_product_variant_images',
+    ));
     register_rest_route('api/v1', '/delete-products/', array(
         'methods' => 'GET',
         'callback' => 'delete_all_products',

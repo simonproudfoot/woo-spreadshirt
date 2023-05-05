@@ -24,10 +24,8 @@ function updateAll()
     }
 }
 
-
 function set_spreadshirt_products($allItems)
 {
-
     foreach ($allItems as $item) {
         try {
             $productType = get_spreadshirt_data('productTypes/' . $item->productTypeId, null, null);
@@ -102,7 +100,7 @@ function set_spreadshirt_products($allItems)
                             'color' => $color['name']
                         ));
 
-                    
+
 
                         $varID =  $color_variation->save();
 
@@ -133,6 +131,7 @@ function set_spreadshirt_products($allItems)
             return;
         }
     }
+ //   update_all_product_variant_images()
     return true;
 }
 function createProduct($product_data, $attributes)
@@ -256,7 +255,10 @@ function save_image_to_media_library($image_url, $fileName)
         'post_type' => 'attachment',
         'post_mime_type' => $mime_type,
         'post_content' => '',
-        'post_status' => 'inherit'
+        'post_status' => 'inherit',
+        'meta_input' => array(
+            'wooSpreadImage' => true // Add the custom metadata key and value
+        )
     );
     $attachment_id = wp_insert_attachment($attachment_data, $file_path);
 
@@ -264,7 +266,6 @@ function save_image_to_media_library($image_url, $fileName)
     $attachment_data['guid'] = $upload_dir['url'] . $fileName . '.' . $file_ext;
     $attachment_metadata = wp_generate_attachment_metadata($attachment_id, $file_path);
     wp_update_attachment_metadata($attachment_id, $attachment_metadata);
-
     return $attachment_id;
 }
 
@@ -300,6 +301,8 @@ function update_variation_images_on_product_page_load()
     if ($getImages) {
         return;
     }
+
+
     $sellableId = $product->sku;
     $productMeta = json_decode(get_post_meta($product->id, 'additional_data')[0], true);
     $variantData = json_decode(get_post_meta($product->id, 'colors')[0], true);
@@ -311,7 +314,56 @@ function update_variation_images_on_product_page_load()
     update_post_meta($product->id, 'variant_images_ready', true);
 }
 
-add_action('woocommerce_before_single_product', 'update_variation_images_on_product_page_load');
 
 
+//add_action('woocommerce_after_single_product_summary', 'update_variation_images_on_product_page_load');
 
+
+function update_all_product_variant_images() {
+    $args = array(
+        'post_type' => 'product',
+        'posts_per_page' => -1,
+    );
+    $products = new WP_Query( $args );
+
+    if ( $products->have_posts() ) {
+        while ( $products->have_posts() ) {
+            $products->the_post();
+            global $product;
+            $product_id = $product->get_id();
+            $product_sku = $product->get_sku();
+            update_product_variant_images($product_id, $product_sku);
+        }
+        wp_reset_postdata();
+    }
+}
+
+//add_action('init', 'update_all_product_variant_images');
+
+function update_product_variant_images($product_id, $product_sku)
+{
+    $productMeta = json_decode(get_post_meta($product_id, 'additional_data')[0], true);
+    $variantData = json_decode(get_post_meta($product_id, 'colors')[0], true);
+    $ideaId = $productMeta['ideaId'];
+    foreach ($variantData as $key => $variation) {
+        $new_image_url = getVariantImages($product_sku, $ideaId, $variation['appearanceId']);
+        change_variation_image_url_by_id($variation['variantId'], $new_image_url, $product_sku);
+    }
+}
+
+function preSelect()
+{
+    echo "<script>
+    window.addEventListener('load', function() {
+          // cheating!
+          var colorSelect = document.getElementById('color');
+          var sizeSelect = document.getElementById('size');
+          if (sizeSelect) {
+            sizeSelect.value = sizeSelect.options[1].value;
+          }
+
+      });
+    </script>";
+}
+
+add_action( 'woocommerce_after_single_product_summary', 'preSelect' );
