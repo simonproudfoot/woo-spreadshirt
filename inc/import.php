@@ -206,28 +206,21 @@ function getVariantImages($sellableId, $ideaId, $appearanceId)
 
 
 
-
 function save_image_to_media_library($image_url, $fileName)
 {
-   
     $image_data = get_image_from_api($image_url);
-
 
     $attachment_id = attachment_url_to_postid($image_url);
     if ($attachment_id) {
-  
         return $attachment_id;
     }
 
-  
     require_once(ABSPATH . 'wp-admin/includes/image.php');
-
 
     $upload_dir = wp_upload_dir();
     $upload_dir['path'] = trailingslashit($upload_dir['basedir']) . 'wooSpreadshirt/';
     $upload_dir['url'] = trailingslashit($upload_dir['baseurl']) . 'wooSpreadshirt/';
 
-   
     if (!file_exists($upload_dir['path'])) {
         mkdir($upload_dir['path'], 0755);
     }
@@ -248,6 +241,9 @@ function save_image_to_media_library($image_url, $fileName)
     $file_path = $upload_dir['path'] . $fileName . '.' . $file_ext;
     file_put_contents($file_path, $image_data);
 
+    // Apply filter to remove intermediate sizes
+    add_filter('intermediate_image_sizes_advanced', 'filter_intermediate_image_sizes');
+
     $attachment_data = array(
         'post_title' => sanitize_file_name($fileName),
         'post_type' => 'attachment',
@@ -255,7 +251,7 @@ function save_image_to_media_library($image_url, $fileName)
         'post_content' => '',
         'post_status' => 'inherit',
         'meta_input' => array(
-            'wooSpreadImage' => true 
+            'wooSpreadImage' => true
         )
     );
     $attachment_id = wp_insert_attachment($attachment_data, $file_path);
@@ -264,8 +260,24 @@ function save_image_to_media_library($image_url, $fileName)
     $attachment_data['guid'] = $upload_dir['url'] . $fileName . '.' . $file_ext;
     $attachment_metadata = wp_generate_attachment_metadata($attachment_id, $file_path);
     wp_update_attachment_metadata($attachment_id, $attachment_metadata);
+
+    // Remove the filter after generating attachment metadata
+    remove_filter('intermediate_image_sizes_advanced', 'filter_intermediate_image_sizes');
+
     return $attachment_id;
 }
+
+// Custom filter to remove intermediate image sizes
+function filter_intermediate_image_sizes($sizes)
+{
+    // Only keep the thumbnail size
+    $thumbnail_size = get_option('thumbnail_size');
+    $new_sizes = array();
+    $new_sizes['thumbnail'] = $thumbnail_size;
+
+    return $new_sizes;
+}
+
 
 
 function change_variation_image_url_by_id($variation_id, $imgUrl, $sellableId)
@@ -311,15 +323,16 @@ function update_variation_images_on_product_page_load()
 // add_action('woocommerce_after_single_product_summary', 'update_variation_images_on_product_page_load');
 // Uncomment to load the variant images on page load 
 
-function update_all_product_variant_images() {
+function update_all_product_variant_images()
+{
     $args = array(
         'post_type' => 'product',
         'posts_per_page' => -1,
     );
-    $products = new WP_Query( $args );
+    $products = new WP_Query($args);
 
-    if ( $products->have_posts() ) {
-        while ( $products->have_posts() ) {
+    if ($products->have_posts()) {
+        while ($products->have_posts()) {
             $products->the_post();
             global $product;
             $product_id = $product->get_id();
@@ -360,4 +373,4 @@ function preSelect()
     </script>";
 }
 
-add_action( 'woocommerce_after_single_product_summary', 'preSelect' );
+add_action('woocommerce_after_single_product_summary', 'preSelect');
