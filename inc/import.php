@@ -1,7 +1,5 @@
 <?php
 
-//echo $product->get_sku(); 
-//add_action('init', 'updateAll');
 function updateAll()
 {
     $allStoreItems = array();
@@ -132,7 +130,6 @@ function set_spreadshirt_products($allItems)
             return;
         }
     }
- //   update_all_product_variant_images()
     return true;
 }
 function createProduct($product_data, $attributes)
@@ -212,25 +209,25 @@ function getVariantImages($sellableId, $ideaId, $appearanceId)
 
 function save_image_to_media_library($image_url, $fileName)
 {
-    // Download the image from the URL
+   
     $image_data = get_image_from_api($image_url);
 
-    // Check if the file already exists in the media library
+
     $attachment_id = attachment_url_to_postid($image_url);
     if ($attachment_id) {
-        // If the file already exists, return the existing attachment ID
+  
         return $attachment_id;
     }
 
-    // Include the image.php file for the wp_generate_attachment_metadata() function
+  
     require_once(ABSPATH . 'wp-admin/includes/image.php');
 
-    // Specify the uploads directory
+
     $upload_dir = wp_upload_dir();
     $upload_dir['path'] = trailingslashit($upload_dir['basedir']) . 'wooSpreadshirt/';
     $upload_dir['url'] = trailingslashit($upload_dir['baseurl']) . 'wooSpreadshirt/';
 
-    // Create the wooSpreadshirt directory if it doesn't exist
+   
     if (!file_exists($upload_dir['path'])) {
         mkdir($upload_dir['path'], 0755);
     }
@@ -258,7 +255,7 @@ function save_image_to_media_library($image_url, $fileName)
         'post_content' => '',
         'post_status' => 'inherit',
         'meta_input' => array(
-            'wooSpreadImage' => true // Add the custom metadata key and value
+            'wooSpreadImage' => true 
         )
     );
     $attachment_id = wp_insert_attachment($attachment_data, $file_path);
@@ -271,8 +268,6 @@ function save_image_to_media_library($image_url, $fileName)
 }
 
 
-
-
 function change_variation_image_url_by_id($variation_id, $imgUrl, $sellableId)
 {
     $variation_obj = new WC_Product_Variation($variation_id);
@@ -280,8 +275,6 @@ function change_variation_image_url_by_id($variation_id, $imgUrl, $sellableId)
     $variation_obj->set_image_id($imgId);
     $variation_obj->save();
 }
-
-
 
 function update_variation_images_on_product_page_load()
 {
@@ -315,10 +308,8 @@ function update_variation_images_on_product_page_load()
     update_post_meta($product->id, 'variant_images_ready', true);
 }
 
-
-
-//add_action('woocommerce_after_single_product_summary', 'update_variation_images_on_product_page_load');
-
+// add_action('woocommerce_after_single_product_summary', 'update_variation_images_on_product_page_load');
+// Uncomment to load the variant images on page load 
 
 function update_all_product_variant_images() {
     $args = array(
@@ -341,7 +332,7 @@ function update_all_product_variant_images() {
     return true;
 }
 
-//add_action('init', 'update_all_product_variant_images');
+
 
 function update_product_variant_images($product_id, $product_sku)
 {

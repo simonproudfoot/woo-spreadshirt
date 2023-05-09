@@ -12,6 +12,19 @@ function delete_all_product_categories()
     }
 }
 
+
+
+function delete_all_products()
+{
+    delete_all_product_posts();
+    delete_all_product_categories();
+    delete_images_with_metadata();
+    return true;
+}
+
+
+
+
 function delete_all_woocommerce_attributes()
 {
     global $wpdb;
@@ -67,7 +80,7 @@ function delete_images_with_metadata()
 }
 
 
-function delete_all_products()
+function delete_all_product_posts()
 {
     $args = array(
         'post_type' => 'product',
@@ -80,5 +93,3 @@ function delete_all_products()
         wp_delete_post(get_the_ID()); // Delete the attachment permanently
     endwhile;
 }
-
-

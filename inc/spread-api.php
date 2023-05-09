@@ -9,6 +9,7 @@ function get_image_from_api($url)
     curl_setopt_array($ch, array(
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 0,
         CURLOPT_HTTPHEADER => array(
             'Authorization: SprdAuth apiKey="' . $apiKey . '"',
             'User-Agent: greenwich/1.0',
@@ -61,6 +62,7 @@ function get_spreadshirt_data($endPoint, $postData, $page)
     curl_setopt_array($curl, array(
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 0,
         CURLOPT_HTTPHEADER => array(
             'Authorization: SprdAuth apiKey="' . $apiKey . '"',
             'User-Agent: greenwich/1.0',
@@ -93,6 +95,7 @@ function get_spreadshirt_basket($postData, $basketId)
     curl_setopt_array($curl, array(
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 0,
         CURLOPT_HTTPHEADER => array(
             'Authorization: SprdAuth apiKey="' . $apiKey . '"',
             'User-Agent: greenwich/1.0',
@@ -126,6 +129,7 @@ function get_spreadshirt_currency($currenctId)
     curl_setopt_array($curl, array(
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 0,
         CURLOPT_HTTPGET => true,
         CURLOPT_HTTPHEADER => array(
             'Authorization: SprdAuth apiKey="' . $apiKey . '"',
