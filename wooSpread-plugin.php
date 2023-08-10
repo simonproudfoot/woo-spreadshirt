@@ -12,7 +12,15 @@
  * Domain Path:       /languages
  */
 
-// If this file is called directly, abort.
+ $currentPage = $_SERVER['REQUEST_URI'];
+
+ 
+
+
+
+echo $currentPage;
+
+
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }

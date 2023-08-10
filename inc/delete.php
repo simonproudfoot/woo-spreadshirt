@@ -19,6 +19,7 @@ function delete_all_products()
     delete_all_product_posts();
     delete_all_product_categories();
     delete_images_with_metadata();
+    remove_unattached_files_from_media_library();
     return true;
 }
 
@@ -92,4 +93,27 @@ function delete_all_product_posts()
     while ($loop->have_posts()) : $loop->the_post();
         wp_delete_post(get_the_ID()); // Delete the attachment permanently
     endwhile;
+}
+
+
+
+function remove_unattached_files_from_media_library() {
+    $unattached_query = new WP_Query(array(
+        'post_type'      => 'attachment',
+        'post_status'    => 'inherit',
+        'posts_per_page' => -1,
+        'fields'         => 'ids',
+        'meta_query'     => array(
+            array(
+                'key'     => '_wp_attachment_context',
+                'compare' => 'NOT EXISTS',
+            ),
+        ),
+    ));
+
+    if ($unattached_query->have_posts()) {
+        foreach ($unattached_query->posts as $attachment_id) {
+            wp_delete_attachment($attachment_id, true);
+        }
+    }
 }

@@ -54,7 +54,7 @@ function set_spreadshirt_products($allItems)
                         'description' => $productType->description,
                         'short_description' => $item->description,
                         'tags' => $item->tags,
-                        // 'image' => $item->previewImage->url,
+                        'image' => $item->previewImage->url,
                         'type' => 'simple',
                         'status' => 'publish',
                     );
@@ -75,7 +75,7 @@ function set_spreadshirt_products($allItems)
                     $attributes = array($size_attribute, $color_attribute);
                     //Save main product to get its id
                     $id = createProduct($product_data, $attributes);
-                    wp_set_object_terms($id, array($productType->name, $productType->categoryName), 'product_cat');
+                    wp_set_object_terms($id, $productType->categoryName, 'product_cat');
 
                     update_post_meta($id, 'image_meta_url', $product_data['image']);
                     update_post_meta($id, '_knawatfibu_url', $product_data['image']);
@@ -202,6 +202,8 @@ function getVariantImages($sellableId, $ideaId, $appearanceId)
             return $image->url;
         }
     }
+
+    return '';
 }
 
 
@@ -344,8 +346,6 @@ function update_all_product_variant_images()
 
     return true;
 }
-
-
 
 function update_product_variant_images($product_id, $product_sku)
 {
